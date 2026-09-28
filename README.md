@@ -46,7 +46,7 @@ Lastly, you need a Transvector Binder and Transvector Dislocator which requires 
 7) Follow the commands on screen 'install' --> 'Y' --> 'Y' (The OpenOS floppy disk is no longer needed in the robot afterwards).
 8) Install the required scripts by copying this line of code into the robot (middle-click to paste).
 
-        wget https://raw.githubusercontent.com/DylanTaylor1/GTNH-CropAutomation/main/setup.lua && setup
+        wget https://raw.githubusercontent.com/Keegater/GTNH-CropAutomation/main/setup.lua && setup
 
 9) Edit the config (not recommended, but check it out) by entering:
 
@@ -66,7 +66,7 @@ Lastly, you need a Transvector Binder and Transvector Dislocator which requires 
 
 ![CropBot-FarmSide](media/CropBot-FarmSide.png?)
 
-First note the orientation of the robot sitting atop the OC charger. It must face towards the right-most column of the working farm. Adjacent to the OC charger is the crop stick chest which can be a few things: any sort of large chest, a JABBA barrel, or storage drawer (orientation does not matter). If the crop stick chest is ever empty, bad things will happen. Next to that is a Trash Can for any random drops that the robot picks up such as weeds, seed bags, and crop sticks but this can be swapped with another chest to recycle some of the materials. The transvector dislocator sits facing the top of the blank farmland (where a crop would go). You can tell which direction the transvector dislocator is facing by the side that is animated. The blank farmland itself acts as a buffer between the working and storage farms. Optionally, place a crop manager nearby (with harvesting disabled) to hydrate and/or fertilize the crops to help them grow faster.
+First note the orientation of the robot sitting atop the OC charger. It must face towards the right-most column of the working farm. Adjacent to the OC charger is the crop stick chest which can be a few things: any sort of large chest, a JABBA barrel, or storage drawer (orientation does not matter). If the crop stick chest is ever empty, bad things will happen. Next to that is a Trash Can for any random drops that the robot picks up such as weeds, seed bags, and crop sticks but this can be swapped with another chest to recycle some of the materials. The transvector dislocator sits facing the top of the blank farmland (where a crop would go). You can tell which direction the transvector dislocator is facing by the side that is animated. The blank farmland itself acts as a buffer between the working and storage farms. Optionally, place a crop manager nearby (with harvesting disabled) to hydrate and/or fertilize the crops to help them grow faster. autoBreed also needs a seed chest one block past the storage chest (`seedContainerPos` in the config); any chest works.
 
 **The location of the water is completely flexible**. They do not have to be in the same locations as in the photo (underneath all five grates) and you can have as many as you would like on both the working farm and storage farm. However, there MUST be a block on top of each water and no two can be next to each other. The block can be literally anything, even a lily pad will work, so long as there is something. It is also possible to use garden soil or fertilized dirt and have absolutely no water on the farms at all, but that sacrifices a few nutrient stats and prevents you from growing crops that require a particular block underneath.
 
@@ -92,9 +92,19 @@ The third program **autoSpread** automatically spreads (duplicates) the target c
 
     autoSpread
 
+The fourth program **autoBreed** breeds a crop you don't have yet. Put scanned seed bags of possible parents in the seed chest and name the crop you want:
+
+    autoBreed Bauxia
+
+It ranks every crop by how likely it is to produce your target as a parent (IC2's own crossbreeding formula), plants the best bags from the chest into the parent slots, and keeps breeding. Any child that would make a better parent replaces the worst one. When the target appears it is moved into slot 1, or into the storage farm if its stats are above your working caps, and the program stops. Chain it like the others:
+
+    autoBreed Bauxia && autoStat && autoSpread
+
+Add `--check` to print the ranking and what the robot reads in the seed chest without touching the farm. Names are case-insensitive and multi-word names work (`autoBreed Salty Root`). Seed bags must be scanned; "Unknown Seeds" are ignored. Parents removed to make room for better ones go to the storage chest, so make it a real chest if you want them back.
+
 (Optional) Disable useStorageFarm in the config to harvest child crops on the working farm during autoSpread instead of moving them to the storage farm. They are only harvested once they reach their maximum growth stage - 1 for the best chances at dropping seeds. Everything is deposited in the storage chest, including other types of seeds and those that do not meet the autoSpreadThreshold. This setting also causes autoSpread to run until the maximum breeding round is reached which means a single iteration can collect hundreds of seeds. It is recommended to use a full-block ME interface as the storage chest if using this method.
 
-Lastly, these programs can be chained together. This may be helpful if you have brand new crops (ie. 1/1/1 spruce saplings) and want them to immediately start spreading once fully statted-up. No crops are added to the storage farm until autoStat is complete. Note that keepMutations in the config should probably be set to false (default) otherwise the storage farm will be overwritten once the second program begins. To run autoSpread after autoStat, simply enter:
+Lastly, these programs can be chained together. This may be helpful if you have brand new crops (ie. 1/1/1 spruce saplings) and want them to immediately start spreading once fully statted-up. No crops are added to the storage farm until autoStat is complete. Crops already on the storage farm are never overwritten: every program skips occupied storage slots, so the storage farm keeps filling across runs until you empty it. To run autoSpread after autoStat, simply enter:
 
     autoStat && autoSpread
 
