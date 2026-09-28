@@ -14,22 +14,26 @@ local config = {
     keepMutations = false,
     -- Stat-up crops during autoTier (Very Slow)
     statWhileTiering = false,
+    -- Default crop for autoBreed when no name is given, e.g. 'Bauxia'
+    breedTarget = nil,
+    -- Seed chest that autoBreed plants parents from (one past the storage chest)
+    seedContainerPos = {-3, 0},
 
     -- Minimum tier for the working farm during autoTier
     autoTierThreshold = 13,
-    -- Minimum Gr + Ga - Re for the working farm during autoStat (21 + 31 - 0 = 52)
-    autoStatThreshold = 52,
-    -- Minimum Gr + Ga - Re for the storage farm during autoSpread (23 + 31 - 0 = 54)
-    autoSpreadThreshold = 50,
+    -- Minimum Gr + Ga - Re for the working farm during autoStat (21 + 31 - 6 = 46)
+    autoStatThreshold = 46,
+    -- Minimum Gr + Ga - Re for the storage farm during autoSpread (kept 2 below autoStat)
+    autoSpreadThreshold = 44,
 
     -- Maximum Growth for crops on the working farm
     workingMaxGrowth = 21,
     -- Maximum Resistance for crops on the working farm
-    workingMaxResistance = 2,
+    workingMaxResistance = 6,
     -- Maximum Growth for crops on the storage farm
     storageMaxGrowth = 23,
     -- Maximum Resistance for crops on the storage farm
-    storageMaxResistance = 2,
+    storageMaxResistance = 6,
 
     -- Minimum Charge Level
     needChargeLevel = 0.2,
