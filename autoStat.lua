@@ -72,9 +72,9 @@ local function checkChild(slot, crop, firstRun)
             end
 
         elseif config.keepMutations and (not database.existInStorage(crop)) then
-            action.transplant(gps.workingSlotToPos(slot), gps.storageSlotToPos(database.nextStorageSlot()))
-            action.placeCropStick(2)
-            database.addToStorage(crop)
+            if action.transplantToStorage(gps.workingSlotToPos(slot), crop) then
+                action.placeCropStick(2)
+            end
 
         else
             action.deweed()

@@ -47,9 +47,9 @@ local function checkChild(slot, crop)
             elseif stat >= config.autoSpreadThreshold then
 
                 if config.useStorageFarm then
-                    action.transplant(gps.workingSlotToPos(slot), gps.storageSlotToPos(database.nextStorageSlot()))
-                    database.addToStorage(crop)
-                    action.placeCropStick(2)
+                    if action.transplantToStorage(gps.workingSlotToPos(slot), crop) then
+                        action.placeCropStick(2)
+                    end
 
                 elseif crop.size >= crop.max - 1 then
                     action.harvest()
@@ -63,9 +63,9 @@ local function checkChild(slot, crop)
             end
 
         elseif config.keepMutations and (not database.existInStorage(crop)) then
-            action.transplant(gps.workingSlotToPos(slot), gps.storageSlotToPos(database.nextStorageSlot()))
-            action.placeCropStick(2)
-            database.addToStorage(crop)
+            if action.transplantToStorage(gps.workingSlotToPos(slot), crop) then
+                action.placeCropStick(2)
+            end
 
         else
             action.deweed()

@@ -96,10 +96,8 @@ local function checkChild(slot, crop, firstRun)
             end
 
         -- Not seen before, move to storage
-        else
-            action.transplant(gps.workingSlotToPos(slot), gps.storageSlotToPos(database.nextStorageSlot()))
+        elseif action.transplantToStorage(gps.workingSlotToPos(slot), crop) then
             action.placeCropStick(2)
-            database.addToStorage(crop)
         end
     end
 end
