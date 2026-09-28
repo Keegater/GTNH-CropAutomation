@@ -10,7 +10,7 @@ local scanner = require('scanner')
 local events = require('events')
 local inventory_controller = component.inventory_controller
 local redstone = component.redstone
-local restockAll, cleanUp  -- Forward declaration
+local restockAll, cleanUp, dumpInventory  -- Forward declaration
 
 local function needCharge()
     return computer.energy() / computer.maxEnergy() < config.needChargeLevel
@@ -63,7 +63,7 @@ local function restockStick()
 end
 
 
-local function dumpInventory()
+function dumpInventory()
     withSelectedSlot(function()
         gps.go(config.storagePos)
 
@@ -178,6 +178,126 @@ local function transplant(src, dest)
 end
 
 
+-- Returns the first storage slot that is air or a bare crop stick, recording the
+-- occupied slots it passes so nothing already in the storage farm is overwritten.
+-- Returns nil when the storage farm is full.
+local function findStorageSlot()
+    gps.save()
+    local found
+    while database.nextStorageSlot() <= config.storageFarmArea do
+        local slot = database.nextStorageSlot()
+        gps.go(gps.storageSlotToPos(slot))
+        local crop = scanner.scan()
+        if crop.name == 'air' or crop.name == 'emptyCrop' then
+            found = slot
+            break
+        end
+        database.addToStorage(crop)
+    end
+    gps.resume()
+    return found
+end
+
+
+-- Moves the crop at src into the next free storage slot. Returns false when full.
+local function transplantToStorage(src, crop)
+    local slot = findStorageSlot()
+    if not slot then
+        return false
+    end
+    transplant(src, gps.storageSlotToPos(slot))
+    database.addToStorage(crop)
+    return true
+end
+
+
+-- Lists the seed chest as {slot, label, size} stacks, or nil if there is no chest.
+local function readSeedChest()
+    gps.save()
+    gps.go(config.seedContainerPos)
+    local stacks
+    local size = inventory_controller.getInventorySize(sides.down)
+    if size then
+        stacks = {}
+        for i=1, size do
+            os.sleep(0)
+            local stack = inventory_controller.getStackInSlot(sides.down, i)
+            if stack then
+                stacks[#stacks+1] = {slot=i, label=stack.label, size=stack.size}
+            end
+        end
+    end
+    gps.resume()
+    return stacks
+end
+
+
+local function freeSlot()
+    for i=1, robot.inventorySize() + config.storageStopSlot do
+        if robot.count(i) == 0 then
+            return i
+        end
+    end
+end
+
+
+-- Carries one seed bag from the seed chest to pos and plants it on a single crop
+-- stick. Returns the scanned crop, or nil if nothing was planted (the bag goes
+-- back to the seed chest).
+local function plantFromChest(chestSlot, pos)
+    local selected = robot.select()
+    gps.save()
+
+    if freeSlot() == nil then
+        dumpInventory()
+    end
+    local slot = freeSlot()
+    if slot == nil then
+        gps.resume()
+        return nil
+    end
+
+    robot.select(slot)
+    gps.go(config.seedContainerPos)
+    inventory_controller.suckFromSlot(sides.down, chestSlot, 1)
+
+    gps.go(pos)
+    if scanner.scan().name == 'air' then
+        placeCropStick()
+    end
+    robot.select(slot)
+    inventory_controller.equip()
+    robot.useDown()
+    inventory_controller.equip()
+
+    local crop = scanner.scan()
+    local planted = crop.isCrop and crop.name ~= 'air' and crop.name ~= 'emptyCrop'
+    if not planted and robot.count(slot) > 0 then
+        gps.go(config.seedContainerPos)
+        robot.dropDown()
+    end
+
+    gps.resume()
+    robot.select(selected)
+    if planted then
+        return crop
+    end
+    return nil
+end
+
+
+local function defaultBadParent(crop)
+    return scanner.isWeed(crop, 'working')
+end
+local badParent = defaultBadParent
+
+
+-- Chooses which parents cleanUp removes; initWork() resets it to the default.
+local function setBadParentRule(rule)
+    badParent = rule or defaultBadParent
+end
+
+
 function cleanUp()
     for slot=1, config.workingFarmArea, 1 do
         -- Scan
@@ -190,7 +310,7 @@ function cleanUp()
 
         -- Remove bad parents
         elseif crop.isCrop and crop.name ~= 'air' then
-            if scanner.isWeed(crop, 'working') then
+            if badParent(crop) then
                 robot.swingDown()
             end
         end
@@ -253,6 +373,7 @@ end
 
 
 local function initWork()
+    badParent = defaultBadParent
     events.initEvents()
     events.hookEvents()
     charge()
@@ -296,5 +417,10 @@ return {
     cleanUp = cleanUp,
     initWork = initWork,
     clearDown = clearDown,
-    analyzeStorage = analyzeStorage
+    analyzeStorage = analyzeStorage,
+    findStorageSlot = findStorageSlot,
+    transplantToStorage = transplantToStorage,
+    readSeedChest = readSeedChest,
+    plantFromChest = plantFromChest,
+    setBadParentRule = setBadParentRule
 }
