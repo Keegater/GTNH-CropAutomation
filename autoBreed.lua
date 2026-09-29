@@ -367,6 +367,9 @@ local function main()
 
     if checkOnly then
         report(readChest())
+        -- Park like charge() does: after a reboot gps.lua assumes charger, facing 1
+        gps.go(config.chargerPos)
+        gps.turnTo(1)
         return
     end
 

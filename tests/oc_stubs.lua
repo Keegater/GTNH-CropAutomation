@@ -5,7 +5,12 @@ stub = {
     chestSize = 27,   -- getInventorySize() result; nil means "no inventory"
     scans = {},       -- queue of geolyzer.analyze() results; empty queue = air
     inventory = {},   -- robot slot -> item count
+    physical = {x=0, y=0, facing=1},  -- where the robot really is; gps.lua only believes
+    chestReads = {},  -- physical {x, y} of every getInventorySize() call
 }
+
+-- Same axes as gps.lua: facing 1 = +y, 2 = +x, 3 = -y, 4 = -x; turnRight counts up.
+local steps = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}}
 
 os.sleep = function() end
 
@@ -29,9 +34,20 @@ end
 package.preload['robot'] = function()
     local selected = 1
     return {
-        forward = function() return true end,
-        turnLeft = function() return true end,
-        turnRight = function() return true end,
+        forward = function()
+            local step = steps[stub.physical.facing]
+            stub.physical.x = stub.physical.x + step[1]
+            stub.physical.y = stub.physical.y + step[2]
+            return true
+        end,
+        turnLeft = function()
+            stub.physical.facing = (stub.physical.facing + 2) % 4 + 1
+            return true
+        end,
+        turnRight = function()
+            stub.physical.facing = stub.physical.facing % 4 + 1
+            return true
+        end,
         up = function() return true end,
         down = function() return true end,
         select = function(slot)
@@ -52,7 +68,10 @@ end
 package.preload['component'] = function()
     return {
         inventory_controller = {
-            getInventorySize = function() return stub.chestSize end,
+            getInventorySize = function()
+                table.insert(stub.chestReads, {x=stub.physical.x, y=stub.physical.y})
+                return stub.chestSize
+            end,
             getStackInSlot = function(_, slot) return stub.chest[slot] end,
             suckFromSlot = function() return true end,
             dropIntoSlot = function() return true end,
