@@ -202,7 +202,7 @@ Add `isWeedLike(crop)`: name `weed` or `Grass`, or Gr ≥ 24, or `venomilia` wit
 
 - Add `breedTarget = nil` (default target when no argument is given).
 - Add `seedContainerPos = {-3, 0}` (seed chest, one past the storage chest in the chest row, outside the farm).
-- Settings this fork carries for the user: `workingMaxResistance = 6`, `storageMaxResistance = 6`, `autoStatThreshold = 46`, `autoSpreadThreshold = 44`.
+- Everything else keeps the upstream defaults.
 
 ### 5.8 `setup.lua`, `uninstall.lua`, `README.md`
 

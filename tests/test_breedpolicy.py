@@ -5,7 +5,7 @@ from lua_env import runtime
 CTX = """{
     info = {bauxia = {e = 0.5}, stagnium = {e = 0.01}, nickelback = {e = 0.009}},
     targetKey = 'bauxia',
-    caps = {workingMaxGrowth = 21, workingMaxResistance = 6},
+    caps = {workingMaxGrowth = 21, workingMaxResistance = 2},
     worstParent = {slot = 3, e = %(worst)s},
     bestChestE = %(chest)s,
     keepMutations = %(keep)s,
@@ -43,9 +43,9 @@ class PolicyTest(unittest.TestCase):
         self.assertEqual(act(self.empty('emptyCrop'), self.ctx()), 'none')
         self.assertEqual(act(self.crop('Grass'), self.ctx()), 'weed')
         self.assertEqual(act(self.crop('venomilia', gr=8), self.ctx()), 'weed')
-        self.assertEqual(act(self.crop('Bauxia', gr=21, re=6), self.ctx()), 'captureSlot1')
+        self.assertEqual(act(self.crop('Bauxia', gr=21, re=2), self.ctx()), 'captureSlot1')
         self.assertEqual(act(self.crop('Bauxia', gr=22, re=1), self.ctx()), 'captureStorage')
-        self.assertEqual(act(self.crop('Bauxia', gr=1, re=7), self.ctx()), 'captureStorage')
+        self.assertEqual(act(self.crop('Bauxia', gr=1, re=3), self.ctx()), 'captureStorage')
         self.assertEqual(act(self.crop('Bauxia', gr=24), self.ctx()), 'weed')
         self.assertEqual(act(self.crop('stagnium'), self.ctx(worst=0.009)), 'promote')
         self.assertEqual(act(self.crop('Nickelback'), self.ctx(worst=0.009)), 'destroy')   # tie: no swap

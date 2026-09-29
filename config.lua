@@ -21,19 +21,19 @@ local config = {
 
     -- Minimum tier for the working farm during autoTier
     autoTierThreshold = 13,
-    -- Minimum Gr + Ga - Re for the working farm during autoStat (21 + 31 - 6 = 46)
-    autoStatThreshold = 46,
-    -- Minimum Gr + Ga - Re for the storage farm during autoSpread (kept 2 below autoStat)
-    autoSpreadThreshold = 44,
+    -- Minimum Gr + Ga - Re for the working farm during autoStat (21 + 31 - 0 = 52)
+    autoStatThreshold = 52,
+    -- Minimum Gr + Ga - Re for the storage farm during autoSpread (23 + 31 - 0 = 54)
+    autoSpreadThreshold = 50,
 
     -- Maximum Growth for crops on the working farm
     workingMaxGrowth = 21,
     -- Maximum Resistance for crops on the working farm
-    workingMaxResistance = 6,
+    workingMaxResistance = 2,
     -- Maximum Growth for crops on the storage farm
     storageMaxGrowth = 23,
     -- Maximum Resistance for crops on the storage farm
-    storageMaxResistance = 6,
+    storageMaxResistance = 2,
 
     -- Minimum Charge Level
     needChargeLevel = 0.2,

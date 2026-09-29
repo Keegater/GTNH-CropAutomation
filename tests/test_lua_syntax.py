@@ -14,10 +14,7 @@ class LuaSyntaxTest(unittest.TestCase):
     def test_config_has_autobreed_settings(self):
         config = runtime().eval("require('config')")
         self.assertEqual(list(config['seedContainerPos'].values()), [-3, 0])
-        self.assertEqual(config['workingMaxResistance'], 6)
-        self.assertEqual(config['storageMaxResistance'], 6)
-        self.assertEqual(config['autoStatThreshold'], 46)
-        self.assertEqual(config['autoSpreadThreshold'], 44)
+        self.assertIsNone(config['breedTarget'])
 
 
 if __name__ == "__main__":

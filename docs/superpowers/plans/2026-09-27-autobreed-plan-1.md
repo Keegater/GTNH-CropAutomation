@@ -16,6 +16,8 @@ The pure modules are unit-tested on the PC through `lupa`. The robot-movement co
 
 **Spec:** `docs/superpowers/specs/2026-09-27-autobreed-design.md`
 
+**Revision 2026-09-29:** the first execution also changed the Resistance caps and autoStat/autoSpread thresholds (Re 6 / 46 / 44), carried over from an earlier, unrelated discussion. The user asked for them removed. `config.lua` keeps the upstream defaults, and this plan now reflects that.
+
 **Plan 2 (separate, later):** read IC2's five hidden crop properties from the pack's jars with a small `javap`-based interpreter, run the per-crop `canGrow` check (spec §5.1), and verify the names, tiers and attributes against the wiki. Then regenerate `crops.lua`. No robot code changes are needed; this plan writes a table with no properties (`s=` absent), which the spec allows, and the robot reports that the odds are estimates.
 
 ---
@@ -54,7 +56,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 | BOT `autoBreed.lua` | the program |
 | BOT `action.lua` | + dumpInventory fix, storage-safe moves, seed chest, planting, bad-parent rule |
 | BOT `autoTier.lua`, `autoStat.lua`, `autoSpread.lua` | storage moves use `transplantToStorage` |
-| BOT `config.lua` | + `breedTarget`, `seedContainerPos`; the user's Resistance settings |
+| BOT `config.lua` | + `breedTarget`, `seedContainerPos` |
 | BOT `setup.lua`, `uninstall.lua`, `README.md` | install list, fork URL, docs |
 | BOT `tests/lua_env.py`, `tests/oc_stubs.lua` | Lua runtime + OpenComputers stand-ins for tests |
 | BOT `tests/test_*.py` | Lua module tests |
@@ -978,7 +980,7 @@ from lua_env import runtime
 CTX = """{
     info = {bauxia = {e = 0.5}, stagnium = {e = 0.01}, nickelback = {e = 0.009}},
     targetKey = 'bauxia',
-    caps = {workingMaxGrowth = 21, workingMaxResistance = 6},
+    caps = {workingMaxGrowth = 21, workingMaxResistance = 2},
     worstParent = {slot = 3, e = %(worst)s},
     bestChestE = %(chest)s,
     keepMutations = %(keep)s,
@@ -1016,9 +1018,9 @@ class PolicyTest(unittest.TestCase):
         self.assertEqual(act(self.empty('emptyCrop'), self.ctx()), 'none')
         self.assertEqual(act(self.crop('Grass'), self.ctx()), 'weed')
         self.assertEqual(act(self.crop('venomilia', gr=8), self.ctx()), 'weed')
-        self.assertEqual(act(self.crop('Bauxia', gr=21, re=6), self.ctx()), 'captureSlot1')
+        self.assertEqual(act(self.crop('Bauxia', gr=21, re=2), self.ctx()), 'captureSlot1')
         self.assertEqual(act(self.crop('Bauxia', gr=22, re=1), self.ctx()), 'captureStorage')
-        self.assertEqual(act(self.crop('Bauxia', gr=1, re=7), self.ctx()), 'captureStorage')
+        self.assertEqual(act(self.crop('Bauxia', gr=1, re=3), self.ctx()), 'captureStorage')
         self.assertEqual(act(self.crop('Bauxia', gr=24), self.ctx()), 'weed')
         self.assertEqual(act(self.crop('stagnium'), self.ctx(worst=0.009)), 'promote')
         self.assertEqual(act(self.crop('Nickelback'), self.ctx(worst=0.009)), 'destroy')   # tie: no swap
@@ -1163,10 +1165,7 @@ class LuaSyntaxTest(unittest.TestCase):
     def test_config_has_autobreed_settings(self):
         config = runtime().eval("require('config')")
         self.assertEqual(list(config['seedContainerPos'].values()), [-3, 0])
-        self.assertEqual(config['workingMaxResistance'], 6)
-        self.assertEqual(config['storageMaxResistance'], 6)
-        self.assertEqual(config['autoStatThreshold'], 46)
-        self.assertEqual(config['autoSpreadThreshold'], 44)
+        self.assertIsNone(config['breedTarget'])
 
 
 if __name__ == "__main__":
@@ -1199,41 +1198,17 @@ with:
     seedContainerPos = {-3, 0},
 ```
 
-- [ ] **Step 4: Edit BOT `config.lua`** — carry the user's Resistance settings
-
-Replace:
-
-```lua
-    -- Minimum Gr + Ga - Re for the working farm during autoStat (21 + 31 - 0 = 52)
-    autoStatThreshold = 52,
-    -- Minimum Gr + Ga - Re for the storage farm during autoSpread (23 + 31 - 0 = 54)
-    autoSpreadThreshold = 50,
-```
-
-with:
-
-```lua
-    -- Minimum Gr + Ga - Re for the working farm during autoStat (21 + 31 - 6 = 46)
-    autoStatThreshold = 46,
-    -- Minimum Gr + Ga - Re for the storage farm during autoSpread (kept 2 below autoStat)
-    autoSpreadThreshold = 44,
-```
-
-Replace `    workingMaxResistance = 2,` with `    workingMaxResistance = 6,`
-
-Replace `    storageMaxResistance = 2,` with `    storageMaxResistance = 6,`
-
-- [ ] **Step 5: Run it and watch it pass**
+- [ ] **Step 4: Run it and watch it pass**
 
 Run: `python -m unittest discover -s "C:/Users/loope/Desktop/GTNH 2.8.4 Agent/CropBot/GTNH-CropAutomation/tests" -p "test_lua_syntax.py" -v`
 
 Expected: `Ran 2 tests` … `OK`
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 git -C "C:/Users/loope/Desktop/GTNH 2.8.4 Agent/CropBot/GTNH-CropAutomation" add config.lua tests/test_lua_syntax.py
-git -C "C:/Users/loope/Desktop/GTNH 2.8.4 Agent/CropBot/GTNH-CropAutomation" commit -m "feat: add autoBreed config and carry Resistance 6 settings" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git -C "C:/Users/loope/Desktop/GTNH 2.8.4 Agent/CropBot/GTNH-CropAutomation" commit -m "feat: add autoBreed config settings" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
 ---
