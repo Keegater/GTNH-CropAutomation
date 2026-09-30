@@ -41,7 +41,7 @@ class AutoBreedCheckTest(unittest.TestCase):
         out = run_autobreed("Bauxia", "--check", chest=self.CHEST)
         self.assertIn("Target Bauxia (tier 6)", out)
         best = next(line for line in out.splitlines() if "best parents:" in line)
-        for name in ("Argentia", "Plumbilia", "Titania"):
+        for name in ("Titania", "Galvania", "Plumbilia"):
             self.assertIn(name, best)
         seeds = next(line for line in out.splitlines() if "seed chest:" in line)
         self.assertIn("Stagnium", seeds)

@@ -109,6 +109,14 @@ class RealTableTest(unittest.TestCase):
         """)
         self.assertEqual(mismatches, 0)
 
+    def test_fertilia_parents_follow_the_hidden_properties(self):
+        lua = runtime()
+        b = lua.eval("require('breeding')")
+        b.load()
+        info = b.prepare(b.resolve('Fertilia'))
+        self.assertEqual(info['dandelion']['e'], 0)       # shares Flower, but its properties rule it out
+        self.assertGreater(info['zomplant']['e'], 0)      # shares nothing, but its properties are close
+
     def test_bauxia_is_in_the_table(self):
         lua = runtime()
         b = lua.eval("require('breeding')")
