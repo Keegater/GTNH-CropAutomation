@@ -16,12 +16,22 @@ def new_robot(chest="", chest_size=27, physical=None):
 
 
 def run_program(lua, *args):
+    return run_with_code(lua, *args)[0]
+
+
+def run_with_code(lua, *args):
+    """Run autoBreed; return (printed output, exit code as the OpenOS shell sees it)."""
     lines = []
     lua.globals().print = lambda *parts: lines.append(" ".join(str(p) for p in parts))
     source = (REPO / "autoBreed.lua").read_text(encoding="utf-8")
-    run = lua.eval("function(src, ...) return assert(load(src, '=autoBreed'))(...) end")
-    run(source, *args)
-    return "\n".join(lines)
+    run = lua.eval("""function(src, ...)
+        local ok, err = pcall(assert(load(src, '=autoBreed')), ...)
+        if ok then return 0 end
+        if type(err) == 'table' and err.reason == 'terminated' then return err.code or 0 end
+        error(err, 0)
+    end""")
+    code = run(source, *args)
+    return "\n".join(lines), code
 
 
 def physical(lua):
@@ -100,6 +110,27 @@ class RobotHeadingTest(unittest.TestCase):
         lua = new_robot()   # empty farm and empty seed chest: it stops for lack of parents
         out = run_program(lua, "Bauxia")
         self.assertIn("need at least two parents", out)
+        self.assertEqual(physical(lua), (0, 0, 1))
+
+
+class StrandedTargetTest(unittest.TestCase):
+    PARENT = ("{name='IC2:blockCrop', ['crop:name']='%s', ['crop:growth']=1, ['crop:gain']=1,"
+              " ['crop:resistance']=1, ['crop:tier']=6, ['crop:size']=3, ['crop:maxSize']=4}")
+    BAUXIA = ("{name='IC2:blockCrop', ['crop:name']='Bauxia', ['crop:growth']=5, ['crop:gain']=5,"
+              " ['crop:resistance']=5, ['crop:tier']=6, ['crop:size']=1, ['crop:maxSize']=3}")
+    AIR = "{name='minecraft:air'}"
+
+    def test_target_found_with_storage_full_is_left_alone_and_stops_the_chain(self):
+        lua = new_robot()
+        first_pass = [self.PARENT % 'stagnium', self.AIR, self.PARENT % 'Nickelback'] + [self.AIR] * 33
+        second_pass = [self.PARENT % 'stagnium', self.BAUXIA]           # Re 5: above the cap of 2
+        storage = ["{name='minecraft:stone'}"] * 81                      # every storage slot taken
+        lua.execute("stub.scans = {%s}" % ", ".join(first_pass + second_pass + storage))
+        out, code = run_with_code(lua, "Bauxia")
+        self.assertIn("storage farm is full", out)
+        self.assertEqual(code, 1)                                        # `&& autoStat` does not run
+        swings = [(s['x'], s['y']) for s in lua.eval("stub.swings").values()]
+        self.assertNotIn((0, 2), swings)                                 # slot 2, where the Bauxia is
         self.assertEqual(physical(lua), (0, 0, 1))
 
 

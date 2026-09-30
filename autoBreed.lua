@@ -15,6 +15,7 @@ local targetKey
 local chest = {}
 local breedRound = 0
 local captured = false
+local stranded
 local lastChance
 
 -- ===================== FUNCTIONS ======================
@@ -243,7 +244,9 @@ local function capture(slot, crop, where)
         print(string.format('autoBreed: Captured %s (%s) into storage slot %d', target.d, stats, #database.getStorage()))
         print('  Its stats are above your working caps, so autoStat would treat it as a weed.')
     else
-        print(string.format('autoBreed: Found %s (%s) but the storage farm is full; it is still on the working farm', target.d, stats))
+        stranded = slot
+        print(string.format('autoBreed: Found %s (%s) in working-farm slot %d, but the storage farm is full.', target.d, stats, slot))
+        print('  Left it there and stopped. Empty the storage farm and run autoBreed again, or take it by hand.')
     end
     captured = true
     computer.beep(1000, 1)
@@ -414,6 +417,13 @@ local function main()
             break
         end
         action.restockAll()
+    end
+
+    -- A target left on the working farm must survive: skip cleanUp and stop any && chain
+    if stranded then
+        action.restockAll()
+        events.unhookEvents()
+        os.exit(1)
     end
 
     -- Terminated Early

@@ -7,12 +7,18 @@ stub = {
     inventory = {},   -- robot slot -> item count
     physical = {x=0, y=0, facing=1},  -- where the robot really is; gps.lua only believes
     chestReads = {},  -- physical {x, y} of every getInventorySize() call
+    swings = {},      -- physical {x, y} of every swingDown()
 }
 
 -- Same axes as gps.lua: facing 1 = +y, 2 = +x, 3 = -y, 4 = -x; turnRight counts up.
 local steps = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}}
 
 os.sleep = function() end
+
+-- OpenOS ends a program by raising this; a real os.exit would kill the test run.
+os.exit = function(code)
+    error({reason = 'terminated', code = code}, 0)
+end
 
 package.preload['sides'] = function()
     return {bottom=0, top=1, back=2, front=3, right=4, left=5, down=0, up=1}
@@ -59,7 +65,10 @@ package.preload['robot'] = function()
         count = function(slot) return stub.inventory[slot or selected] or 0 end,
         inventorySize = function() return 16 end,
         useDown = function() return true end,
-        swingDown = function() return true end,
+        swingDown = function()
+            table.insert(stub.swings, {x=stub.physical.x, y=stub.physical.y})
+            return true
+        end,
         suckDown = function() return true end,
         dropDown = function() return true end,
     }

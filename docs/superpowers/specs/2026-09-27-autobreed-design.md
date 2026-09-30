@@ -176,7 +176,7 @@ ctx = { target, eff = {name → e}, caps = {workingMaxGrowth, workingMaxResistan
 - storage full (only with `keepMutations`);
 - no longer viable (startup step 8).
 
-**On capture:** print where the target went and its stats, beep, run cleanup that keeps parents unless weed-like, then `restockAll`.
+**On capture:** print where the target went and its stats, beep, run cleanup that keeps parents unless weed-like, then `restockAll`. If the target has to go to storage and the storage farm is full, leave it where it is, skip cleanup, park, and `os.exit(1)` so an `&&` chain stops.
 
 ### 5.5 `scanner.lua`
 
