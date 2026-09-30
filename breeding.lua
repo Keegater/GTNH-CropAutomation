@@ -96,13 +96,14 @@ end
 
 
 -- Builds the per-crop info map for a target, keyed by lowercase internal name:
--- {n, d, t, r = ratio(target, crop), w, e = r / w}.
+-- {n, d, t, r = ratio(target, crop), w, e = r / w, k = both crops' hidden
+-- properties known (e is exact) or not (e is an estimate)}.
 local function prepare(target)
     info, infoByDisplay, targetKey = {}, {}, target.n:lower()
     for _, c in ipairs(crops) do
         local r = ratio(target, c)
         local key = c.n:lower()
-        info[key] = {n=c.n, d=c.d, t=c.t, r=r, w=c.w, e=r / c.w}
+        info[key] = {n=c.n, d=c.d, t=c.t, r=r, w=c.w, e=r / c.w, k=(target.s ~= nil and c.s ~= nil)}
         infoByDisplay[c.d:lower()] = key
     end
     return info

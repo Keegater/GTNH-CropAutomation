@@ -24,6 +24,11 @@ local function pct(value)
 end
 
 
+local function mark(entry)
+    return entry.k and '' or '~'
+end
+
+
 local function isEmpty(crop)
     return crop.name == 'air' or crop.name == 'emptyCrop'
 end
@@ -68,7 +73,7 @@ local function resolveTarget()
     target = info[targetKey]
     breeding.unload()
     if known < total then
-        print(string.format('autoBreed: hidden crop properties known for %d of %d crops, so odds are estimates', known, total))
+        print(string.format('autoBreed: hidden crop properties known for %d of %d crops; values marked ~ are estimates', known, total))
     end
     return true
 end
@@ -114,7 +119,7 @@ local function report(ignored)
 
     local best = {}
     for _, entry in ipairs(breeding.top(5)) do
-        best[#best+1] = entry.d .. ' ' .. pct(entry.e)
+        best[#best+1] = entry.d .. ' ' .. pct(entry.e) .. mark(entry)
     end
     print('  best parents: ' .. (#best > 0 and table.concat(best, ', ') or 'none share anything with it'))
 
@@ -123,7 +128,7 @@ local function report(ignored)
     else
         local have = {}
         for key, entry in pairs(chest) do
-            have[#have+1] = string.format('%s %s (%d)', info[key].d, pct(info[key].e), entry.count)
+            have[#have+1] = string.format('%s %s%s (%d)', info[key].d, pct(info[key].e), mark(info[key]), entry.count)
         end
         print('  seed chest:   ' .. (#have > 0 and table.concat(have, ', ') or 'no usable seed bags'))
         for _, label in ipairs(ignored) do
@@ -186,10 +191,17 @@ end
 
 
 local function printChance()
-    local chance = breeding.chance(parentKeys())
-    if chance ~= lastChance then
-        lastChance = chance
-        print(string.format('autoBreed: %s %s per cross with current parents', target.d, pct(chance)))
+    local keys = parentKeys()
+    local chance, exact = breeding.chance(keys), true
+    for _, key in ipairs(keys) do
+        if not (info[key] and info[key].k) then
+            exact = false
+        end
+    end
+    local text = pct(chance) .. (exact and '' or '~')
+    if text ~= lastChance then
+        lastChance = text
+        print(string.format('autoBreed: %s %s per cross with current parents', target.d, text))
     end
 end
 

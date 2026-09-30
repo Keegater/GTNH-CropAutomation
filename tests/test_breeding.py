@@ -88,6 +88,17 @@ class BreedingTest(unittest.TestCase):
         self.assertEqual(self.b.labelToKey('Stagnium Seeds'), 'stagnium')
         self.assertIsNone(self.lua.eval("package.loaded.crops"))
 
+    def test_prepare_marks_exact_values(self):
+        lua = runtime()
+        b = lua.eval("require('breeding')")
+        lua.execute("""require('breeding').load({
+            {n='T', d='T', t=1, a='X', s='1,1,1,1,1', w=500},
+            {n='K', d='K', t=1, a='X', s='1,1,1,1,1', w=515},
+            {n='U', d='U', t=1, a='X', w=505}})""")
+        info = b.prepare(b.resolve('T'))
+        self.assertTrue(info['k']['k'])      # both crops' properties known: exact
+        self.assertFalse(info['u']['k'])     # U's properties unknown: estimate
+
     def test_properties_known_counts(self):
         self.assertEqual(tuple(self.b.propertiesKnown()), (0, 5))
 

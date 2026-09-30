@@ -50,7 +50,10 @@ class AutoBreedCheckTest(unittest.TestCase):
         self.assertIn("(2)", seeds)
         self.assertIn("ignored:      Unknown Seeds", out)
         self.assertIn("free memory:  200 KB", out)
-        self.assertIn("odds are estimates", out)
+        self.assertIn("values marked ~ are estimates", out)
+        self.assertIn("Aluminium Oreberry", best)
+        self.assertIn("%~", best)                          # its properties are unknown
+        self.assertNotIn("~", seeds)                       # Stagnium and Nickelback are exact
 
     def test_multi_word_names(self):
         out = run_autobreed("Salty", "Root", "--check")
